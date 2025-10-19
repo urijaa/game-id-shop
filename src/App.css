@@ -1,42 +1,245 @@
+/* นำเข้าฟอนต์ Jersey 25 */
+@import url('https://fonts.googleapis.com/css2?family=Jersey+25&display=swap');
+
+/* การตั้งค่าพื้นฐาน */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7; /* สีพื้นหลังอ่อน ๆ คล้ายรูป */
+}
+
+/* ปรับ root ให้กว้างขึ้นและยกเลิกการจัดกึ่งกลาง */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0; /* ลบ padding เดิมออก */
+    text-align: left; /* เปลี่ยนเป็นชิดซ้าย */
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* ---------------------------------- */
+/* STYLES สำหรับ HEADER/NAVBAR */
+/* ---------------------------------- */
+
+.main-header {
+    background-color: #ffffff; /* แถบพื้นหลังสีขาว */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 10px 0 0 0;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* ส่วนบน: Login/Sign Up (ที่มาแทนที่ sign in/sing up) */
+.header-top {
+    display: flex;
+    justify-content: flex-end;
+    padding: 5px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0; 
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* ปุ่ม Login with Google / Logout */
+.login-button, .logout-button {
+    background: none;
+    border: none;
+    color: #000;
+    font-size: 14px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0;
 }
 
-.card {
-  padding: 2em;
+.user-display {
+    display: flex;
+    align-items: center;
 }
 
-.read-the-docs {
-  color: #888;
+.user-display img {
+    margin-right: 8px;
+    border: 2px solid #555;
+}
+
+.logout-button {
+    margin-left: 12px;
+    font-weight: bold;
+}
+
+
+/* ส่วนกลาง: โลโก้, เมนู, ไอคอน */
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 1. โลโก้ */
+.logo-shop {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* ชิดซ้ายตามการจัดวางโลโก้ในรูป */
+    line-height: 0.8;
+}
+
+.mustode-logo {
+    font-family: 'Jersey 25', sans-serif;
+    font-size: 32px;
+    font-weight: normal; 
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+.mustode-shop {
+    font-family: 'Jersey 25', sans-serif;
+    font-size: 32px;
+    margin: 0;
+    font-weight: normal;
+}
+
+/* 2. เมนูหลัก */
+.main-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 24px; /* เว้นห่างไอเท็ม */
+    align-items: center;
+}
+
+.main-nav li {
+    margin: 0 20px;
+}
+
+.main-nav a {
+    text-decoration: none;
+    color: #000;
+    font-weight: bold;
+    font-size: 16px;
+    text-transform: uppercase;
+    transition: color 0.3s;
+}
+
+.main-nav a:hover {
+    color: #646cff;
+}
+
+/* 3. ไอคอนการทำงาน (Cart, Heart, Search) */
+.action-icons {
+    display: flex;
+    gap: 25px;
+    font-size: 24px;
+}
+
+.action-icons span {
+    cursor: pointer;
+    /* ปรับขนาดและน้ำหนักไอคอนให้เข้ากับดีไซน์ */
+    font-weight: bold;
+    color: #333;
+}
+
+/* columns layout */
+.columns {
+  display: flex;
+  flex-direction: row; /* บังคับให้ columns เรียงเป็นแถว (สองคอลัมน์ข้างกัน) */
+  position: relative;
+  width: 100%;
+  height: 180px; /* ปรับตามต้องการ */
+  box-sizing: border-box;
+}
+
+/* column container: ให้เป็นคอลัมน์แนวตั้ง (rows ภายในจะเรียงตามแนวนอน) */
+.col {
+  display: flex;
+  flex-direction: column; /* สำคัญ: rows ในคอลัมน์จะเป็น children แนวตั้ง */
+  box-sizing: border-box;
+}
+
+/* กำหนดสัดส่วนของคอลัมน์ (ใช้ flex-basis เพื่อหลีกเลี่ยง override จาก width) */
+.col-left { flex: 0 0 40%; }
+.col-right { flex: 0 0 60%; }
+
+/* rows: บังคับให้แต่ละ row เป็นแถว (3 cell เรียงแนวนอน) */
+.row {
+  display: flex;
+  flex-direction: row; /* สำคัญ: ให้ cell ใน row เรียงตามแนวนอน */
+  align-items: center;
+  justify-content: stretch;
+  box-sizing: border-box;
+}
+
+/* ความสูงของ row ในแต่ละคอลัมน์
+   - คอลัมน์ซ้าย: แต่ละ row flex-grow = 1
+   - คอลัมน์ขวา: แต่ละ row flex-grow = 2 (ดังนั้นแต่ละ row ในซ้ายจะครึ่งของขวา)
+*/
+.col-left .row { flex: 1 1 0; }
+.col-right .row { flex: 2 1 0; }
+
+/* each row contains 3 equal cells horizontally */
+.row .cell {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: row; /* ภายใน cell ให้เป็นแถว (ถ้ามี inline content) */
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0; /* ป้องกัน overflow */
+  border: 0; /* เอาเส้นช่วย debug ออก */
+}
+
+/* header-top cell (left col row3 middle cell) */
+.header-top-cell { align-items: center; justify-content: center; }
+
+/* center the login area inside the cell */
+.header-top-centered { display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* logo cell: place logo at right of that cell */
+.logo-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* ชิดขวา */
+  justify-content: center;
+  gap: 0;
+}
+
+/* Nav styling (in right col row2 middle cell) */
+.main-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 24px; /* เว้นห่างไอเท็ม */
+  align-items: center;
+}
+.main-nav a {
+  text-decoration: none;
+  color: #000;
+  font-weight: bold;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+/* icons in right col row3 middle cell */
+.header-icons {
+  display: flex;
+  gap: 20px;
+  font-size: 22px;
+  align-items: center;
+}
+
+/* vertical divider full viewport height between columns */
+.divider {
+  position: absolute;
+  left: 40%; /* ตำแหน่งระหว่างคอลัมน์ (เท่ากับ width of col-left) */
+  top: 0;
+  height: 100vh;
+  width: 2px;
+  background: #000;
+  z-index: 2;
+}
+
+/* responsive: เปลี่ยนเป็นคอลัมน์บนหน้าจอเล็ก */
+@media (max-width: 900px) {
+  .columns { flex-direction: column; height: auto; }
+  .col-left, .col-right { flex: none; width: 100%; }
+  .divider { display: none; }
+  .col-left .row, .col-right .row { flex: none; height: auto; }
 }

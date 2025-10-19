@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "game-id-shop"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }
