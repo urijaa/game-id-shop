@@ -1,113 +1,77 @@
 import { Outlet, Link } from 'react-router-dom';
-import { auth, loginWithGoogle, logout } from './firebase';
+import { auth, db, loginWithGoogle, logout } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import './App.css';
 
 export default function App() {
   const [user] = useAuthState(auth);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checking, setChecking] = useState(true);
 
-  const handleLogin = async () => {
-    try {
-      await loginWithGoogle();
-    } catch (e) {
-      console.error(e);
-      alert(`Login error: ${e?.code || e?.message || e}`);
-    }
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        if (!user) { alive && setIsAdmin(false); return; }
+        const snap = await getDoc(doc(db, 'admins', user.uid));
+        alive && setIsAdmin(snap.exists());
+      } catch (e) {
+        console.error('check admin error', e);
+        alive && setIsAdmin(false);
+      } finally {
+        alive && setChecking(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [user]);
+
+  const onLogin = async () => {
+    try { await loginWithGoogle(); }
+    catch (e) { alert(`Login error: ${e?.code || e?.message || e}`); }
   };
 
   return (
-    <div className="app-container layout-row">
-      <header className="main-header">
-        <div className="columns">
-          <div className="col col-left">
-            <div className="row">
-              <div className="cell" />
-              <div className="cell" />
-              <div className="cell" />
+    <div>
+      <header className="header">
+        {/* แถวบน: login / logout */}
+        <div className="header-top">
+          {user ? (
+            <div className="user-chip">
+              <img src={user.photoURL} alt="" />
+              <button className="logout-btn" onClick={logout}>logout</button>
             </div>
+          ) : (
+            <button className="login-btn" onClick={onLogin}>sign in/sing up</button>
+          )}
+        </div>
 
-            <div className="row">
-              <div className="cell" />
-              <div className="cell" />
-              <div className="cell" />
-            </div>
-
-            <div className="row">
-              <div className="cell" />
-              <div className="cell header-top-cell">
-                {/* 1.1 ส่วนบน: Login / Logout (อยู่ตรงกลางของ cell นี้) */}
-                {user ? (
-                  <div className="user-display header-top-centered">
-                    <img
-                      src={user.photoURL}
-                      width={28}
-                      height={28}
-                      alt="User Avatar"
-                      style={{ borderRadius: '50%', verticalAlign: 'middle' }}
-                    />
-                    <button onClick={logout} className="logout-button">
-                      Logout
-                    </button>
-                  </div>
-                ) : (
-                  <div className="header-top-centered">
-                    <button onClick={handleLogin} className="login-button">
-                      Login with Google
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="cell" />
-            </div>
+        {/* โลโก้ – เมนู – ไอคอน */}
+        <div className="header-main">
+          <div className="brand">
+            <h1 className="mustode">MUSTODE</h1>
+            <h1 className="shop">SHOP</h1>
           </div>
 
-          <div className="col col-right">
-            <div className="row">
-              <div className="cell" />
-              <div className="cell" />
-              <div className="cell logo-cell">
-                {/* columns2 row1: logo ชิดขวา */}
-                <div className="logo-right">
-                  <h1 className="mustode-logo">MUSTODE</h1>
-                  <h1 className="mustode-shop">SHOP</h1>
-                </div>
-              </div>
-            </div>
+          <nav className="nav">
+            <ul>
+              <li><Link to="/admin">home</Link></li>
+              <li><Link to="/admin/add">Add/Edit</Link></li>
+              <li><Link to="/admin/history">history</Link></li>
+            </ul>
+          </nav>
 
-            <div className="row">
-              <div className="cell nav-cell" />
-              <div className="cell nav-cell">
-                {/* columns2 row2: nav (เรียงแนว row จากซ้ายไปขวา) */}
-                <nav className="main-nav">
-                  <ul>
-                    <li><Link to="/">Home</Link></li>
-                    <li><Link to="/sell">Sell</Link></li>
-                    <li><Link to="/account">My Account</Link></li>
-                  </ul>
-                </nav>
-              </div>
-              <div className="cell nav-cell" />
-            </div>
-
-            <div className="row">
-              <div className="cell" />
-              <div className="cell icons-cell">
-                {/* columns2 row3: icons (row, เว้นห่าง) */}
-                <div className="action-icons header-icons">
-                  <span className="icon-cart">🛒</span>
-                  <span className="icon-heart">🤍</span>
-                  <span className="icon-search">🔍</span>
-                </div>
-              </div>
-              <div className="cell" />
-            </div>
+          <div className="icons" aria-hidden>
+            <span>🛒</span>
+            <span>🤍</span>
+            <span>🔍</span>
           </div>
-
-          {/* vertical divider full viewport height */}
-          <div className="divider" />
         </div>
       </header>
 
-      <Outlet />
+      {/* ส่งสถานะแอดมินให้เพจลูก */}
+      <Outlet context={{ isAdmin, checking }} />
     </div>
   );
 }
