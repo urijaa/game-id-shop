@@ -1,31 +1,72 @@
-import React, { useEffect } from 'react';
+// src/pages/user/UserLayout.jsx (ไฟล์แก้ไขที่ถูกต้อง)
+
+import React, { useEffect, useState } from 'react';
 import { Outlet, useOutletContext, Link, useNavigate } from 'react-router-dom';
 import { logout } from '../../firebase';
+import Cart from './Cart';
+import Payment from './Payment';
+import CompletePayment from './CompletePayment';
+import Favorite from './Favorite';
+import Search from './Search'; 
 
 export default function UserLayout() {
-  const parentCtx = useOutletContext() || {}; // { isAdmin, checking, user }
+  const parentCtx = useOutletContext() || {};
   const { user, checking } = parentCtx;
   const navigate = useNavigate();
 
-  // debug: ดูว่า context มาถึงไหม
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isCompleteOpen, setIsCompleteOpen] = useState(false);
+  const [isFavoriteOpen, setIsFavoriteOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false); 
+
+  const closeCart = () => setIsCartOpen(false);
+  const closePayment = () => setIsPaymentOpen(false);
+  const closeComplete = () => setIsCompleteOpen(false);
+  const closeFavorite = () => setIsFavoriteOpen(false);
+  const closeSearch = () => setIsSearchOpen(false); 
+
+  const handleGoToCheckout = () => {
+    setIsCartOpen(false);
+    setIsPaymentOpen(true);
+  };
+  
+  const handleConfirmPayment = () => {
+    setIsPaymentOpen(false);
+    setIsCompleteOpen(true);
+  };
+
   useEffect(() => {
     console.log('UserLayout parentCtx', { user, checking });
   }, [user, checking]);
 
-  // ถ้ายังกำลังเช็กสิทธิ์ ให้แสดง placeholder
   if (checking) return <div style={{ padding: 24 }}>Checking permissions…</div>;
 
   return (
-    <div className="user-page">
+    <div className="user-page" style={{ position: 'relative' }}> 
+      
+      {/* --- นี่คือบรรทัดที่แก้ไข --- */}
       <header className="header user-header" style={{ borderBottom: '1px solid #eee', position: 'relative', zIndex: 20 }}>
+      {/* --------------------------- */}
+        
         <div className="header-top" style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 12px' }}>
           {user ? (
             <div className="user-chip" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {/* ถ้าไม่มี photoURL จะยังเห็นปุ่ม Logout */}
               {user.photoURL ? (
                 <img src={user.photoURL} alt="avatar" width={28} height={28} style={{ borderRadius: '50%' }} />
               ) : null}
-              <button className="logout-btn" onClick={() => { logout(); navigate('/login', { replace: true }); }}>
+              <button
+                className="logout-btn"
+                onClick={async () => {
+                  try {
+                    await logout();
+                  } catch (e) {
+                    console.error('logout error', e);
+                  } finally {
+                    navigate('/login', { replace: true });
+                  }
+                }}
+              >
                 Logout
               </button>
             </div>
@@ -35,13 +76,11 @@ export default function UserLayout() {
             </div>
           )}
         </div>
-
         <div className="header-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px' }}>
           <div className="brand">
             <h1 className="mustode" style={{ margin: 0 }}>MUSTODE</h1>
             <h1 className="shop" style={{ margin: 0 }}>SHOP</h1>
           </div>
-
           <nav className="nav">
             <ul style={{ display: 'flex', gap: 18, listStyle: 'none', margin: 0, padding: 0 }}>
               <li><Link to="/user">Home</Link></li>
@@ -49,11 +88,11 @@ export default function UserLayout() {
               <li><Link to="/user/Contact">Contact Us</Link></li>
             </ul>
           </nav>
-
+          
           <div className="icons" aria-hidden style={{ display: 'flex', gap: 12 }}>
-            <span>🛒</span>
-            <span>🤍</span>
-            <span>🔍</span>
+            <span onClick={() => setIsCartOpen(true)} style={{ cursor: 'pointer', fontSize: '1.2rem', userSelect: 'none' }}>🛒</span>
+            <span onClick={() => setIsFavoriteOpen(true)} style={{ cursor: 'pointer', fontSize: '1.2rem', userSelect: 'none' }}>🤍</span>
+            <span onClick={() => setIsSearchOpen(true)} style={{ cursor: 'pointer', fontSize: '1.2rem', userSelect: 'none' }}>🔍</span>
           </div>
         </div>
       </header>
@@ -61,6 +100,13 @@ export default function UserLayout() {
       <main className="main-content">
         <Outlet context={parentCtx} />
       </main>
+
+      {/* --- การแสดงผล Modal --- */}
+      {isCartOpen && <Cart onClose={closeCart} onGoToCheckout={handleGoToCheckout} />}
+      {isPaymentOpen && <Payment onClose={closePayment} onConfirm={handleConfirmPayment} />}
+      {isCompleteOpen && <CompletePayment onClose={closeComplete} />} 
+      {isFavoriteOpen && <Favorite onClose={closeFavorite} />}
+      {isSearchOpen && <Search onClose={closeSearch} />}
     </div>
   );
 }
