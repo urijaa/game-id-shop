@@ -8,33 +8,49 @@ import {
 } from 'react-router-dom';
 
 import App from './App.jsx';
-import './App.css'
+import './App.css';
+import LoginPage from './LoginPage.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
 import AdminHome from './pages/admin/AdminHome.jsx';
 import AdminAddEdit from './pages/admin/AdminAddEdit.jsx';
 import AdminHistory from './pages/admin/AdminHistory.jsx';
+import UserHome from './pages/user/UserHome.jsx';
+import UserProducts from './pages/user/UserProduct.jsx';
+import UserContact from './pages/user/UserContact.jsx';
+import UserLayout from './pages/user/UserLayout.jsx';
 
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />, // Header + ส่ง isAdmin ผ่าน <Outlet context={{...}} />
+    element: <App />,
     children: [
-      // เข้าหน้าแรกให้เด้งไป /admin
-      { index: true, element: <Navigate to="/admin" replace /> },
+      { index: true, element: <Navigate to="/login" replace /> },
+      { path: 'login', element: <LoginPage /> },
+
+      // เปลี่ยนเป็น nested user routes (ใช้ UserLayout)
+      {
+        path: 'user',
+        element: <UserLayout />,
+        children: [
+          { index: true, element: <UserHome /> },             // /user
+          { path: 'Products', element: <UserProducts /> },    // /user/Products
+          { path: 'Contact', element: <UserContact /> },      // /user/Contact
+        ],
+      },
 
       {
         path: 'admin',
-        element: <AdminLayout />, // layout ของแอดมิน (ต้องมี <Outlet /> ข้างใน)
+        element: <AdminLayout />,
         children: [
-          { index: true, element: <AdminHome /> },        // /admin
-          { path: 'add', element: <AdminAddEdit /> },     // /admin/add
-          { path: 'history', element: <AdminHistory /> }, // /admin/history
+          { index: true, element: <AdminHome /> },
+          { path: 'add', element: <AdminAddEdit /> },
+          { path: 'history', element: <AdminHistory /> },
         ],
       },
 
       // 404
-      { path: '*', element: <Navigate to="/admin" replace /> },
+      { path: '*', element: <Navigate to="/login" replace /> },
     ],
   },
 ]);

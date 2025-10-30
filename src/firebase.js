@@ -40,5 +40,5 @@ export const loginWithGoogle = async () => {
   }
 };
 
-export const logout = () => signOut(auth);
+export function logout() { return auth.signOut(); } // ตัวอย่าง — ตรวจว่ามี export อยู่
 export const ts = () => serverTimestamp();
