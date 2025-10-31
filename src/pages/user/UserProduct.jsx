@@ -1,7 +1,9 @@
-import React, { useState } from 'react'; // <-- เพิ่ม useState สำหรับเก็บค่า Slider
+import React, { useState, useEffect } from 'react'; // <-- เพิ่ม useEffect
 import ListingCard from '../../components/ListingCard';
 import Slider from 'rc-slider'; // <-- 1. Import Library ที่เพิ่งติดตั้ง
 import 'rc-slider/assets/index.css'; // <-- 2. Import CSS ของ Slider (สำคัญมาก!)
+import { db } from '../../firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 // ----- 1. ส่วนของ CSS (ใส่ในตัวแปร string) -----
 // ผมลบ CSS ของ "price-slider-mock" อันเก่าออกไปแล้ว
@@ -17,9 +19,10 @@ const pageStyles = `
   .products-grid-container {
     flex-grow: 1;
   }
+  /* ใช้ grid แบบ responsive: จะได้ 1-3 คอลัมน์ขึ้นกับความกว้างหน้าจอ */
   .products-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 16px;
   }
   .sidebar-wrapper {
@@ -92,25 +95,10 @@ function UserProductStyles() {
 }
 
 
-// ----- 3. ข้อมูลจำลอง (Mock Data) -----
-const mockListings = Array.from({ length: 6 }).map((_, i) => ({
-  id: `mock-${i + 1}`,
-  title: `ID AFK Journey (Global)`,
-  game: 'AFK Journey',
-  price: 550.00,
-  images: [`https://via.placeholder.com/320x240.png?text=AFK+Journey+${i + 1}`],
-  ownerUid: 'mockowner'
-}));
-
-
-// ----- 4. คอมโพเนนต์ Sidebar (อัปเดตให้มี State และ Slider) -----
+// ----- 3. คอมโพเนนต์ Sidebar (อัปเดตให้มี State และ Slider) -----
 function ProductSidebar() {
-  
-  // 3. สร้าง State เพื่อเก็บค่ [min, max] ของ Price
-  // ค่าเริ่มต้นคือ [20, 1000]
   const [priceRange, setPriceRange] = useState([20, 1000]);
 
-  // 4. สร้างฟังก์ชันสำหรับอัปเดต State เมื่อ Slider ถูกเลื่อน
   const handlePriceChange = (newRange) => {
     setPriceRange(newRange);
   };
@@ -133,34 +121,47 @@ function ProductSidebar() {
 
       <div className="sidebar-section">
         <h3 className="sidebar-title">Price</h3>
-        
-        {/* 5. แทนที่ Mock Slider ด้วย Slider ที่ทำงานได้จริง */}
         <div className="price-slider-container">
           <Slider
-            range // <-- บอกว่าเป็น Slider แบบ 2 หัว (Range)
-            min={0} // <-- ราคาน้อยสุดที่เป็นไปได้
-            max={5000} // <-- ราคามากสุดที่เป็นไปได้ (ปรับได้ตามต้องการ)
-            value={priceRange} // <-- 6. ใช้ State เป็นค่าปัจจุบัน
-            onChange={handlePriceChange} // <-- 7. เรียกฟังก์ชันเมื่อเลื่อน
+            range
+            min={0}
+            max={5000}
+            value={priceRange}
+            onChange={handlePriceChange}
           />
         </div>
 
-        {/* 8. แสดงตัวเลขจาก State ทำให้มันอัปเดตตาม */}
         <div className="price-label">
           {priceRange[0]}B - {priceRange[1]}B
         </div>
-
       </div>
     </div>
   );
 }
 
 
-// ----- 5. คอมโพเนนต์หน้าหลัก (Export default) -----
+// ----- 4. คอมโพเนนต์หน้าหลัก (Export default) -----
+// เปลี่ยน: เอา mock data ออก และดึงข้อมูลจริงจาก Firestore collection 'listings'
+// โดยเรียงตาม createdAt desc (เหมือน AdminHome)
 export default function UserProduct() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'listings'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setItems(rows);
+      setLoading(false);
+    }, (err) => {
+      console.error('listen listings error', err);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
   return (
     <>
-      {/* เรียกใช้คอมโพเนนต์ CSS ที่นี่ */}
       <UserProductStyles />
 
       <div className="page-container" style={{ padding: '24px' }}>
@@ -171,11 +172,20 @@ export default function UserProduct() {
           </aside>
 
           <main className="products-grid-container">
-            <div className="products-grid">
-              {mockListings.map((item) => (
-                <ListingCard key={item.id} item={item} />
-              ))}
-            </div>
+            <h1 style={{ margin: '0 0 16px 0' }}>All Products</h1>
+
+            {loading ? (
+              <div>Loading…</div>
+            ) : items.length === 0 ? (
+              <div>No products found.</div>
+            ) : (
+              <div className="products-grid">
+                {items.map((item) => (
+                  <ListingCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+
           </main>
 
         </div>

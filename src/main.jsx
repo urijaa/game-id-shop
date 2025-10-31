@@ -14,10 +14,13 @@ import AdminLayout from './pages/admin/AdminLayout.jsx';
 import AdminHome from './pages/admin/AdminHome.jsx';
 import AdminAddEdit from './pages/admin/AdminAddEdit.jsx';
 import AdminHistory from './pages/admin/AdminHistory.jsx';
-import UserHome from './pages/user/UserHome.jsx';
-import UserProducts from './pages/user/UserProduct.jsx';
-import UserContact from './pages/user/UserContact.jsx';
 import UserLayout from './pages/user/UserLayout.jsx';
+import UserHome from './pages/user/UserHome.jsx';
+import UserProduct from './pages/user/UserProduct.jsx';
+import UserContact from './pages/user/UserContact.jsx';
+import Payment from './pages/user/Payment.jsx';
+import CompletePayment from './pages/user/CompletePayment.jsx';
+import { CartProvider } from './contexts/CartContext.jsx';
 
 
 const router = createBrowserRouter([
@@ -33,9 +36,11 @@ const router = createBrowserRouter([
         path: 'user',
         element: <UserLayout />,
         children: [
-          { index: true, element: <UserHome /> },             // /user
-          { path: 'Products', element: <UserProducts /> },    // /user/Products
-          { path: 'Contact', element: <UserContact /> },      // /user/Contact
+          { index: true, element: <UserHome /> },                 // /user
+          { path: 'Products', element: <UserProduct /> },         // /user/Products
+          { path: 'Contact', element: <UserContact /> },         // /user/Contact
+          { path: 'payment', element: <Payment /> },             // /user/payment
+          { path: 'complete', element: <CompletePayment /> },     // /user/complete
         ],
       },
 
@@ -57,6 +62,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <CartProvider>
+      <RouterProvider router={router} />
+    </CartProvider>
   </React.StrictMode>
 );

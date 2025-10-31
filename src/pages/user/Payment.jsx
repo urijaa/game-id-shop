@@ -1,143 +1,28 @@
 // src/pages/user/Payment.jsx (ไฟล์ใหม่)
 
-import React from 'react';
-// (ถ้าจำเป็นต้องใช้) import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { CartContext } from '../../contexts/CartContext.jsx';
 
-// ----- 1. ข้อมูลจำลอง (Mock Data) -----
-const mockItem = {
-  id: 1,
-  title: 'ไอดี AFK Journey (Global) - 120,000+ Diamonds + สุ่มตัวละคร 6 ดาว 20 ตัวขึ้นไป',
-  price: 550,
-  quantity: 1,
-  image: 'https://via.placeholder.com/90x90.png?text=AFK+Item' 
-};
+// QR mock
 const qrCodeImage = 'https://via.placeholder.com/200x200.png?text=QR+Code';
 
-// ----- 2. ส่วนของ CSS (รวมไว้ในไฟล์เดียว) -----
+// minimal styles (kept)
 const paymentStyles = `
-  .payment-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.6); /* ทึบกว่าเดิมเล็กน้อย */
-    z-index: 40; /* อยู่หลัง Modal */
-  }
-
-  .payment-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 800px; /* กว้างกว่าตะกร้า */
-    max-height: 90vh;
-    background-color: #ffffff;
-    z-index: 50; /* อยู่บนสุด */
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    font-family: Arial, sans-serif;
-  }
-
-  /* --- Header --- */
-  .payment-header {
-    display: flex;
-    justify-content: flex-end;
-    padding: 16px 20px;
-    border-bottom: 1px solid #eee;
-  }
-  /* (วงสีน้ำเงิน) ปุ่ม Back */
-  .payment-back-btn {
-    background: none;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    padding: 6px 16px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #555;
-    cursor: pointer;
-  }
+  .payment-backdrop { position: fixed; top:0; left:0; width:100%; height:100vh; background-color: rgba(0,0,0,0.6); z-index:40; }
+  .payment-modal { position: fixed; top:50%; left:50%; transform: translate(-50%,-50%); width:90%; max-width:800px; max-height:90vh; background:#fff; z-index:50; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); display:flex; flex-direction:column; font-family: Arial, sans-serif; }
+  .payment-header{ display:flex; justify-content:flex-end; padding:16px 20px; border-bottom:1px solid #eee; }
+  .payment-back-btn{ background:none; border:1px solid #ccc; border-radius:20px; padding:6px 16px; font-size:0.9rem; font-weight:600; color:#555; cursor:pointer; }
   .payment-back-btn:hover { background-color: #f5f5f5; }
 
-  /* --- Body (Scroll ได้) --- */
-  .payment-body {
-    overflow-y: auto;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-  
-  hr.payment-divider {
-    border: none;
-    border-top: 1px solid #eee;
-    margin: 0;
-  }
+  .payment-body{ overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:24px; }
+  .payment-item-summary{ display:flex; align-items:center; gap:16px; }
+  .payment-item-image{ width:90px; height:90px; object-fit:cover; border-radius:8px; }
+  .payment-item-details{ flex-grow:1; }
+  .payment-item-title{ font-size:1rem; font-weight:600; margin:0 0 12px 0; }
+  .quantity-selector-static{ border:1px solid #ccc; border-radius:20px; padding:6px 16px; font-size:0.9rem; }
+  .payment-item-price{ font-size:1.1rem; font-weight:700; text-align:right; }
 
-  /* --- Item Summary --- */
-  .payment-item-summary {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .payment-item-image {
-    width: 90px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-  .payment-item-details { flex-grow: 1; }
-  .payment-item-title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0 0 12px 0;
-  }
-  /* ซ่อนตัวเลือกจำนวน แต่ใช้ layout เดิม */
-  .quantity-selector-static {
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    padding: 6px 16px;
-    font-size: 0.9rem;
-  }
-  .payment-item-price {
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-align: right;
-  }
-
-  /* --- Promo Code --- */
-  .promo-section {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-  .promo-section label {
-    font-size: 1rem;
-    font-weight: 600;
-    flex-basis: 150px;
-  }
-  .promo-input {
-    flex-grow: 1;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-  }
-  .promo-apply-btn {
-    padding: 10px 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #333;
-    background-color: #e0e0e0;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  .promo-apply-btn:hover { background-color: #d0d0d0; }
-
-  /* --- Total --- */
   .total-section {
     display: flex;
     justify-content: space-between;
@@ -146,7 +31,6 @@ const paymentStyles = `
   .total-label { font-size: 1.3rem; font-weight: 700; }
   .total-price { font-size: 1.3rem; font-weight: 700; }
 
-  /* --- Checkout --- */
   .checkout-title {
     font-size: 1.5rem;
     font-weight: 700;
@@ -228,106 +112,198 @@ const paymentStyles = `
     cursor: pointer;
   }
   .confirm-btn:hover { background-color: #a8c99a; }
-  .upload-note { font-size: 0.8rem; color: #777; }
+  .confirm-btn[disabled]{ opacity:0.6; cursor:not-allowed; }
+
+  /* preview */
+  .preview-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .preview-img {
+    width: 160px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+  }
+  .preview-remove {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #a00;
+  }
+
+  /* popup */
+  .popup-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 60;
+    display: grid;
+    place-items: center;
+  }
+  .popup {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+  }
+  .popup-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
 `;
 
-// ----- 3. คอมโพเนนต์สำหรับใส่ CSS -----
-function PaymentStyles() {
-  return <style>{paymentStyles}</style>;
-}
+function PaymentStyles(){ return <style>{paymentStyles}</style>; }
 
-// ----- 4. คอมโพเนนต์หลักของ Payment -----
-export default function Payment({ onClose, onConfirm }) {
-  const item = mockItem;
+export default function Payment({ onClose }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { cart: cartFromContext } = useContext(CartContext);
+  const items = (location.state && location.state.items) ? location.state.items : (cartFromContext || []);
+
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const total = items.reduce((s, it) => s + (Number(it.price || 0) * (it.quantity || 1)), 0);
+
+  const handleFileChange = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    setFile(f);
+    setPreviewUrl(URL.createObjectURL(f));
+  };
+
+  const handleRemovePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl('');
+    setFile(null);
+  };
+
+  const handleBackToCart = () => {
+    navigate('/user', { replace: true, state: { openCart: true } });
+  };
+
+  // NOW: Confirm does NOT call Firebase — proceed even if no file.
+  const handleConfirm = async () => {
+    setUploading(true);
+    try {
+      // ensure we send full items array to CompletePayment
+      const itemsToSend = Array.isArray(items) ? items.map(it => ({
+        id: it.id,
+        title: it.title || 'Untitled Item',
+        price: Number(it.price || 0),
+        quantity: it.quantity || 1,
+        images: Array.isArray(it.images) ? it.images : (it.image ? [it.image] : []),
+      })) : [];
+
+      console.log('Payment: confirming items', itemsToSend);
+
+      // small delay for UX
+      await new Promise((r) => setTimeout(r, 200));
+
+      // send full array as `items`
+      navigate('/user/complete', { state: { items: itemsToSend } });
+    } catch (e) {
+      console.error('confirm error', e);
+      alert('การยืนยันการชำระเงินล้มเหลว — โปรดลองใหม่');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <>
       <PaymentStyles />
-      {/* 1. พื้นหลังสีทึบ (คลิกเพื่อปิด) */}
       <div className="payment-backdrop" onClick={onClose}></div>
 
-      {/* 2. ตัว Modal */}
-      <div className="payment-modal">
-        {/* --- Header (ปุ่ม Back) --- */}
+      <div className="payment-modal" role="dialog" aria-modal="true">
         <header className="payment-header">
-          {/* (วงสีน้ำเงิน) ปุ่ม Back */}
-          <button className="payment-back-btn" onClick={onClose}>Back</button>
+          <button className="payment-back-btn" onClick={handleBackToCart}>Back</button>
         </header>
 
-        {/* --- Body (Scroll ได้) --- */}
         <div className="payment-body">
-          
-          {/* --- Item Summary --- */}
-          <section className="payment-item-summary">
-            <img src={item.image} alt={item.title} className="payment-item-image" />
-            <div className="payment-item-details">
-              <p className="payment-item-title">{item.title}</p>
-              <div className="quantity-selector-static">
-                <span>{item.quantity}</span>
+          {items.map((it) => (
+            <section className="payment-item-summary" key={it.id}>
+              <img src={(Array.isArray(it.images) && it.images[0]) || it.image || 'https://via.placeholder.com/90x90.png?text=AFK+Item'} alt={it.title} className="payment-item-image" />
+              <div className="payment-item-details">
+                <p className="payment-item-title">{it.title}</p>
+                <div className="quantity-selector-static"><span>{it.quantity || 1}</span></div>
               </div>
-            </div>
-            <div className="payment-item-price">{item.price * item.quantity} Baht</div>
-          </section>
+              <div className="payment-item-price">฿{Number(it.price || 0) * (it.quantity || 1)}</div>
+            </section>
+          ))}
 
           <hr className="payment-divider" />
 
-          {/* --- Promo Code --- */}
-          <section className="promo-section">
-            <label htmlFor="promo-code">Got a promo code?</label>
-            <input type="text" id="promo-code" className="promo-input" placeholder="Code" />
-            <button className="promo-apply-btn">Apply Code</button>
-          </section>
-
-          <hr className="payment-divider" />
-
-          {/* --- Total --- */}
           <section className="total-section">
             <span className="total-label">Total</span>
-            <span className="total-price">{item.price} Baht</span>
+            <span className="total-price">฿{total} Baht</span>
           </section>
 
           <hr className="payment-divider" />
 
-          {/* --- Checkout --- */}
           <section className="checkout-section">
             <h2 className="checkout-title">Checkout</h2>
-            <div className="checkout-grid">
-              
-              {/* Column 1: PromptPay */}
-              <div className="checkout-option promptpay">
-                <div className="promptpay-header">
-                  <div className="radio-select">
-                    <div className="radio-select-inner"></div>
-                  </div>
-                  <label htmlFor="promptpay">promptpay</label>
-                </div>
-                <img src={qrCodeImage} alt="PromptPay QR Code" className="qr-code-img" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: 16 }}>
+                <div style={{ marginBottom: 12, fontWeight: 600 }}>PromptPay</div>
+                <img src={qrCodeImage} alt="PromptPay QR Code" style={{ width: '100%', maxWidth: 200 }} />
                 <p className="promptpay-note">*You can scan this QR code to make a payment.</p>
               </div>
-              
-              {/* Column 2: Upload */}
-              <div className="checkout-option upload-option">
-                <span className="upload-label">Upload payment receipt</span>
-                
-                {/* ปุ่มนี้ควรจะเปิด File Explorer */}
-                <label className="upload-button" htmlFor="payment-upload">
-                  <span className="upload-icon">&#8679;</span> {/* Upload Icon */}
-                  <span>Upload Payment</span>
-                </label>
-                <input type="file" id="payment-upload" hidden />
-                
-                {/* (วงสีม่วง) ปุ่ม Confirm */}
-                <button className="confirm-btn" onClick={onConfirm}>
-                  Confirm
-                </button>
-                <p className="upload-note">*After completing the payment, kindly upload your payment receipt and confirm your transaction.</p>
-              </div>
 
+              <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: 16 }}>
+                <span style={{ fontWeight: 600 }}>Upload payment receipt</span>
+
+                {!previewUrl ? (
+                  <>
+                    <label className="upload-button" htmlFor="payment-upload" style={{ marginTop: 12 }}>
+                      <span style={{ fontSize: 24 }}>📤</span>
+                      <div>Upload Payment (optional)</div>
+                    </label>
+                    <input type="file" id="payment-upload" hidden accept="image/*" onChange={handleFileChange} />
+                  </>
+                ) : (
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 12 }}>
+                    <img src={previewUrl} alt="preview" className="preview-img" />
+                    <div>
+                      <button className="preview-remove" onClick={handleRemovePreview} aria-label="remove preview">✕</button>
+                      <div style={{ marginTop: 8, color: '#666' }}>{file?.name}</div>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  className="confirm-btn"
+                  onClick={handleConfirm}
+                  disabled={uploading}
+                  style={{ marginTop: 12, width: '100%' }}
+                >
+                  {uploading ? 'Processing…' : 'Confirm'}
+                </button>
+                <p style={{ fontSize: 12, color: '#777', marginTop: 8 }}>*You may upload a receipt, but it is optional. Confirm will proceed without uploading.</p>
+              </div>
             </div>
           </section>
-
-        </div> {/* จบ payment-body */}
-      </div> {/* จบ payment-modal */}
+        </div>
+      </div>
     </>
   );
 }

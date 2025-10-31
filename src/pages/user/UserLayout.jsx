@@ -1,7 +1,7 @@
 // src/pages/user/UserLayout.jsx (ไฟล์แก้ไขที่ถูกต้อง)
 
 import React, { useEffect, useState } from 'react';
-import { Outlet, useOutletContext, Link, useNavigate } from 'react-router-dom';
+import { Outlet, useOutletContext, Link, useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../../firebase';
 import Cart from './Cart';
 import Payment from './Payment';
@@ -13,14 +13,32 @@ export default function UserLayout() {
   const parentCtx = useOutletContext() || {};
   const { user, checking } = parentCtx;
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartItemId, setCartItemId] = useState(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
   const [isFavoriteOpen, setIsFavoriteOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
 
-  const closeCart = () => setIsCartOpen(false);
+  // ถ้ามา navigation ด้วย state.openCart ให้เปิด modal
+  useEffect(() => {
+    const s = location.state;
+    if (s && s.openCart) {
+      setCartItemId(s.itemId || null);
+      setIsCartOpen(true);
+      // ล้าง state ใน history เพื่อไม่ให้เปิดซ้ำเมื่อ reload/back
+      try {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (e) { /* ignore */ }
+    }
+  }, [location]);
+
+  const closeCart = () => {
+    setIsCartOpen(false);
+    setCartItemId(null);
+  };
   const closePayment = () => setIsPaymentOpen(false);
   const closeComplete = () => setIsCompleteOpen(false);
   const closeFavorite = () => setIsFavoriteOpen(false);
@@ -28,7 +46,9 @@ export default function UserLayout() {
 
   const handleGoToCheckout = () => {
     setIsCartOpen(false);
-    setIsPaymentOpen(true);
+    // เปิด payment modal หรือ navigate ไปหน้า checkout
+    // setIsPaymentOpen(true);
+    navigate('/user'); // หรือตาม flow ที่ต้องการ
   };
   
   const handleConfirmPayment = () => {
@@ -102,7 +122,7 @@ export default function UserLayout() {
       </main>
 
       {/* --- การแสดงผล Modal --- */}
-      {isCartOpen && <Cart onClose={closeCart} onGoToCheckout={handleGoToCheckout} />}
+      {isCartOpen && <Cart onClose={closeCart} onGoToCheckout={handleGoToCheckout} /* optionally pass cartItemId */ />}
       {isPaymentOpen && <Payment onClose={closePayment} onConfirm={handleConfirmPayment} />}
       {isCompleteOpen && <CompletePayment onClose={closeComplete} />} 
       {isFavoriteOpen && <Favorite onClose={closeFavorite} />}
