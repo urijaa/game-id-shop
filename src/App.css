@@ -1,245 +1,248 @@
-/* นำเข้าฟอนต์ Jersey 25 */
+/* Google Font ตัวโลโก้ */
 @import url('https://fonts.googleapis.com/css2?family=Jersey+25&display=swap');
 
-/* การตั้งค่าพื้นฐาน */
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f7f7f7; /* สีพื้นหลังอ่อน ๆ คล้ายรูป */
+/* ------------------ RESET ------------------ */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { margin: 0; font-family: Arial, sans-serif; background:#f7f7f7; }
+
+/* ------------------ LAYOUT ------------------ */
+:root {
+  --page-max: 1200px;   /* ความกว้างสูงสุดของคอนเทนต์ */
+  --side-pad: 16px;     /* ระยะขอบซ้ายขวา */
 }
 
-/* ปรับ root ให้กว้างขึ้นและยกเลิกการจัดกึ่งกลาง */
-#root {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0; /* ลบ padding เดิมออก */
-    text-align: left; /* เปลี่ยนเป็นชิดซ้าย */
-}
-
-/* ---------------------------------- */
-/* STYLES สำหรับ HEADER/NAVBAR */
-/* ---------------------------------- */
-
-.main-header {
-    background-color: #ffffff; /* แถบพื้นหลังสีขาว */
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    padding: 10px 0 0 0;
-}
-
-/* ส่วนบน: Login/Sign Up (ที่มาแทนที่ sign in/sing up) */
-.header-top {
-    display: flex;
-    justify-content: flex-end;
-    padding: 5px 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0; 
-}
-
-/* ปุ่ม Login with Google / Logout */
-.login-button, .logout-button {
-    background: none;
-    border: none;
-    color: #000;
-    font-size: 14px;
-    text-transform: uppercase;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    padding: 0;
-}
-
-.user-display {
-    display: flex;
-    align-items: center;
-}
-
-.user-display img {
-    margin-right: 8px;
-    border: 2px solid #555;
-}
-
-.logout-button {
-    margin-left: 12px;
-    font-weight: bold;
-}
-
-
-/* ส่วนกลาง: โลโก้, เมนู, ไอคอน */
-.header-main {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* 1. โลโก้ */
-.logo-shop {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; /* ชิดซ้ายตามการจัดวางโลโก้ในรูป */
-    line-height: 0.8;
-}
-
-.mustode-logo {
-    font-family: 'Jersey 25', sans-serif;
-    font-size: 32px;
-    font-weight: normal; 
-    margin: 0;
-    letter-spacing: 2px;
-}
-
-.mustode-shop {
-    font-family: 'Jersey 25', sans-serif;
-    font-size: 32px;
-    margin: 0;
-    font-weight: normal;
-}
-
-/* 2. เมนูหลัก */
-.main-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    gap: 24px; /* เว้นห่างไอเท็ม */
-    align-items: center;
-}
-
-.main-nav li {
-    margin: 0 20px;
-}
-
-.main-nav a {
-    text-decoration: none;
-    color: #000;
-    font-weight: bold;
-    font-size: 16px;
-    text-transform: uppercase;
-    transition: color 0.3s;
-}
-
-.main-nav a:hover {
-    color: #646cff;
-}
-
-/* 3. ไอคอนการทำงาน (Cart, Heart, Search) */
-.action-icons {
-    display: flex;
-    gap: 25px;
-    font-size: 24px;
-}
-
-.action-icons span {
-    cursor: pointer;
-    /* ปรับขนาดและน้ำหนักไอคอนให้เข้ากับดีไซน์ */
-    font-weight: bold;
-    color: #333;
-}
-
-/* columns layout */
-.columns {
-  display: flex;
-  flex-direction: row; /* บังคับให้ columns เรียงเป็นแถว (สองคอลัมน์ข้างกัน) */
-  position: relative;
+/* รวมบล็อกหลักให้กึ่งกลางและพอดีจอ (เหมือนรูปแรก) */
+:is(
+  .header, .searchbar, .grid, .footer,
+  .admin-grid, .admin-list, .edit-page,
+  .hero, .page, .content, .container, .wrap, .admin-page
+){
+  max-width: var(--page-max);
+  margin-left: auto;
+  margin-right: auto;
   width: 100%;
-  height: 180px; /* ปรับตามต้องการ */
+  padding-left: var(--side-pad);
+  padding-right: var(--side-pad);
   box-sizing: border-box;
 }
 
-/* column container: ให้เป็นคอลัมน์แนวตั้ง (rows ภายในจะเรียงตามแนวนอน) */
-.col {
-  display: flex;
-  flex-direction: column; /* สำคัญ: rows ในคอลัมน์จะเป็น children แนวตั้ง */
-  box-sizing: border-box;
+/* ------------------ HEADER ------------------ */
+.header {
+  background:#fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.06);
+  padding: 8px 16px 12px;
+  margin: 16px auto;
 }
 
-/* กำหนดสัดส่วนของคอลัมน์ (ใช้ flex-basis เพื่อหลีกเลี่ยง override จาก width) */
-.col-left { flex: 0 0 40%; }
-.col-right { flex: 0 0 60%; }
+/* แถวบน: login/right tools */
+.header-top {
+  display:flex; justify-content:flex-end; align-items:center;
+  gap:12px; padding-bottom:8px; border-bottom:1px solid #eee;
+}
+.login-btn, .logout-btn {
+  background:none; border:none; cursor:pointer;
+  text-transform:uppercase; font-weight:bold; letter-spacing:.2px;
+}
+.user-chip { display:flex; align-items:center; gap:8px; }
+.user-chip img { width:28px; height:28px; border-radius:50%; border:2px solid #444; }
 
-/* rows: บังคับให้แต่ละ row เป็นแถว (3 cell เรียงแนวนอน) */
-.row {
-  display: flex;
-  flex-direction: row; /* สำคัญ: ให้ cell ใน row เรียงตามแนวนอน */
-  align-items: center;
-  justify-content: stretch;
-  box-sizing: border-box;
+/* แถวล่าง: โลโก้ — เมนู — ไอคอน */
+.header-main {
+  display:grid;
+  grid-template-columns: 220px 1fr 160px;
+  align-items:center;
+  gap:16px; padding-top:10px;
+  min-height: 56px;
 }
 
-/* ความสูงของ row ในแต่ละคอลัมน์
-   - คอลัมน์ซ้าย: แต่ละ row flex-grow = 1
-   - คอลัมน์ขวา: แต่ละ row flex-grow = 2 (ดังนั้นแต่ละ row ในซ้ายจะครึ่งของขวา)
-*/
-.col-left .row { flex: 1 1 0; }
-.col-right .row { flex: 2 1 0; }
-
-/* each row contains 3 equal cells horizontally */
-.row .cell {
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: row; /* ภายใน cell ให้เป็นแถว (ถ้ามี inline content) */
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  min-width: 0; /* ป้องกัน overflow */
-  border: 0; /* เอาเส้นช่วย debug ออก */
+/* โลโก้ซ้าย */
+.brand {
+  line-height:.86;
+  display:flex; flex-direction:column; align-items:flex-start;
+}
+.brand .mustode, .brand .shop {
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 34px; font-weight: normal; letter-spacing: 2px; margin:0;
 }
 
-/* header-top cell (left col row3 middle cell) */
-.header-top-cell { align-items: center; justify-content: center; }
-
-/* center the login area inside the cell */
-.header-top-centered { display: flex; align-items: center; justify-content: center; gap: 8px; }
-
-/* logo cell: place logo at right of that cell */
-.logo-right {
+/* เมนูกลาง */
+.nav ul {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end; /* ชิดขวา */
-  justify-content: center;
-  gap: 0;
-}
-
-/* Nav styling (in right col row2 middle cell) */
-.main-nav ul {
+  gap: 40px;
   list-style: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  gap: 24px; /* เว้นห่างไอเท็ม */
+  justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
 }
-.main-nav a {
-  text-decoration: none;
-  color: #000;
-  font-weight: bold;
-  font-size: 16px;
-  text-transform: uppercase;
+.nav a {
+  text-decoration:none; color:#000; font-weight:700;
+  text-transform: lowercase;
+}
+.nav a:hover { color:#646cff; }
+
+/* ไอคอนขวา */
+.icons { display:flex; gap:22px; justify-content:flex-end; font-size:22px; }
+.icons span { cursor:pointer; }
+
+/* แถบค้นหาใต้ header */
+.searchbar {
+  width:100%;
+  margin: 8px auto 16px;
+  background:#fff; border:1px solid #e5e5e5; border-radius:10px;
+  padding:12px 14px;
 }
 
-/* icons in right col row3 middle cell */
-.header-icons {
-  display: flex;
-  gap: 20px;
-  font-size: 22px;
-  align-items: center;
+/* ------------------ GRID การ์ดสินค้า (หน้า shop) ------------------ */
+.grid {
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+.card {
+  background:#fff; border:1px solid #e5e5e5; border-radius:12px;
+  overflow:hidden; display:flex; flex-direction:column;
+}
+.thumb {
+  width:100%;
+  aspect-ratio: 4 / 5;
+  object-fit:cover;
+  display:block;
+}
+.card-body { padding:10px 12px; }
+.card h3 { font-size:15px; margin:0 0 4px; }
+.meta { color:#666; font-size:13px; }
+.price-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 12px; border-top:1px solid #eee; font-weight:bold;
+}
+.price-row .unit { color:#666; font-weight:normal; }
+
+/* ------------------ FOOTER ------------------ */
+.footer {
+  background:#4a4a4a; color:#fff; border-radius:8px;
+  padding:24px; margin: 28px auto;
+  display:grid; grid-template-columns: 1fr 1fr; gap:24px;
+}
+.footer h4 { margin:0 0 10px; font-size:18px; letter-spacing:.3px; }
+.footer p { margin:6px 0; color:#eaeaea; }
+
+/* ------------------ ADMIN / EDIT PAGES ------------------ */
+/* hero แบนเนอร์ในหน้า admin */
+.hero {
+  background:url('https://images.unsplash.com/photo-1526491109672-74740652b963?q=80&w=1500&auto=format&fit=crop') center/cover no-repeat;
+  border-radius:10px;
+  height:220px;
+  display:flex; align-items:center; justify-content:center;
+  margin: 16px auto 24px;
+  overflow:hidden;
+}
+.hero-inner { color:#fff; padding:24px; text-shadow:0 2px 8px rgba(0,0,0,.6); text-align:center; }
+
+/* โครงหน้า admin สองคอลัมน์ (sidebar + list) */
+.admin-grid {
+  display:grid;
+  grid-template-columns: 220px 1fr;
+  gap:16px;
 }
 
-/* vertical divider full viewport height between columns */
-.divider {
-  position: absolute;
-  left: 40%; /* ตำแหน่งระหว่างคอลัมน์ (เท่ากับ width of col-left) */
-  top: 0;
-  height: 100vh;
-  width: 2px;
-  background: #000;
-  z-index: 2;
+/* ปุ่ม/ลิสต์ด้านซ้าย */
+.admin-sidebar {
+  background:#fff; border:1px solid #e5e5e5; border-radius:8px; padding:16px;
+}
+.admin-sidebar h4{ margin:0 0 8px; }
+.admin-sidebar ul{ margin:0; padding-left:18px; line-height:1.9; }
+
+/* ลิสต์การ์ดด้านขวา */
+.admin-list{ display:grid; gap:12px; }
+.admin-section-title{ margin:8px 0; }
+
+/* แถวสินค้าในหน้า admin */
+.admin-row {
+  display:grid;
+  grid-template-columns: 1fr 1px 180px;
+  background:#fff; border:1px solid #e5e5e5; border-radius:12px;
+  overflow:hidden;
+  width:100%;
+}
+.admin-row-left{ display:flex; align-items:center; gap:16px; padding:12px; }
+.admin-thumb{ width:110px; height:140px; object-fit:cover; border-radius:8px; }
+.admin-row-text .admin-id{ font-weight:700; margin-bottom:6px; }
+.admin-divider{ background:#e5e5e5; }
+.admin-actions{ display:flex; align-items:center; justify-content:center; gap:12px; padding:12px; }
+.icon-btn{ width:44px; height:44px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:20px; }
+.pill{ border:1px solid #222; padding:8px 12px; border-radius:999px; background:#fff; cursor:pointer; }
+
+/* หน้าแก้ไข */
+.edit-page h2{ margin:8px 0 12px; text-align:center; }
+.edit-form{
+  display:grid;
+  grid-template-columns: 360px 1fr;
+  gap:16px;
+  background:#fff;
+  border:1px solid #e5e5e5;
+  border-radius:12px;
+  padding:16px;
+  justify-content:center;
+}
+.image-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
+.image-cell{ position:relative; border:1px solid #eee; border-radius:10px; overflow:hidden; }
+.image-cell img{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+.del-img{
+  position:absolute; top:6px; right:6px; width:28px; height:28px; border-radius:50%;
+  border:none; background:#000; color:#fff; cursor:pointer; opacity:.85;
+}
+.image-add{
+  height:100%; min-height:160px;
+  border:1px dashed #bbb; display:grid; place-items:center;
+  border-radius:10px; cursor:pointer; background:#f2f2f2;
+}
+.edit-right label{ display:block; font-weight:700; margin:10px 0 6px; }
+.edit-right input, .edit-right textarea{
+  width:100%; border:1px solid #ddd; background:#eee;
+  border-radius:16px; padding:12px 14px; outline:none;
+}
+.submit{
+  border:1px solid #222; background:#fff;
+  padding:10px 18px; border-radius:999px; cursor:pointer;
 }
 
-/* responsive: เปลี่ยนเป็นคอลัมน์บนหน้าจอเล็ก */
+/* ------------------ RESPONSIVE ------------------ */
+@media (max-width: 1280px) {
+  .nav ul { gap: 28px; }
+}
+
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: repeat(3,1fr); }
+  .header-main { grid-template-columns: 200px 1fr 140px; }
+}
+
 @media (max-width: 900px) {
-  .columns { flex-direction: column; height: auto; }
-  .col-left, .col-right { flex: none; width: 100%; }
-  .divider { display: none; }
-  .col-left .row, .col-right .row { flex: none; height: auto; }
+  .nav ul { gap: 20px; }
+  .admin-grid{ grid-template-columns: 1fr; }
+  .edit-form{ grid-template-columns: 1fr; }
+}
+
+@media (max-width: 800px) {
+  #root { padding: 0 12px; }
+  .header-main { grid-template-columns: 1fr; gap:10px; }
+  .brand { align-items:center; }
+  .brand .mustode, .brand .shop { font-size: 30px; }
+  .nav ul { justify-content:center; flex-wrap:wrap; gap: 18px; }
+  .icons { justify-content:center; font-size:20px; gap:16px; }
+  .grid { grid-template-columns: repeat(2,1fr); }
+}
+
+@media (max-width: 520px) {
+  .brand .mustode, .brand .shop { font-size: 26px; }
+  .grid { grid-template-columns: 1fr; }
+  .nav ul { gap: 14px; }
+  .searchbar { padding:10px 12px; }
 }
