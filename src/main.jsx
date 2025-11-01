@@ -21,7 +21,7 @@ import UserContact from './pages/user/UserContact.jsx';
 import Payment from './pages/user/Payment.jsx';
 import CompletePayment from './pages/user/CompletePayment.jsx';
 import { CartProvider } from './contexts/CartContext.jsx';
-
+import AdminHistoryDetail from './pages/admin/AdminHistoryDetail.jsx';
 
 const router = createBrowserRouter([
   {
@@ -36,11 +36,15 @@ const router = createBrowserRouter([
         path: 'user',
         element: <UserLayout />,
         children: [
-          { index: true, element: <UserHome /> },                 // /user
-          { path: 'Products', element: <UserProduct /> },         // /user/Products
-          { path: 'Contact', element: <UserContact /> },         // /user/Contact
-          { path: 'payment', element: <Payment /> },             // /user/payment
-          { path: 'complete', element: <CompletePayment /> },     // /user/complete
+          { index: true, element: <UserHome /> },           // /user
+          { path: 'products/:id', element: <UserProduct /> },      // ✅ /user/products
+          { path: 'product/:id', element: <UserProduct /> },// /user/product/:id
+          { path: 'contact', element: <UserContact /> },    // /user/contact
+          { path: 'payment', element: <Payment /> },
+          { path: 'complete', element: <UserProduct /> },
+          
+          // (ออปชัน) เผื่อเผลอใช้ตัวใหญ่ /Products ให้ redirect มาที่ตัวเล็ก
+          { path: 'Products', element: <Navigate to="products" replace /> },
         ],
       },
 
@@ -51,6 +55,7 @@ const router = createBrowserRouter([
           { index: true, element: <AdminHome /> },
           { path: 'add', element: <AdminAddEdit /> },
           { path: 'history', element: <AdminHistory /> },
+          { path: 'history/:id', element: <AdminHistoryDetail /> },
         ],
       },
 

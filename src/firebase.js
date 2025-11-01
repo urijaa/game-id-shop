@@ -4,6 +4,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  getRedirectResult,           // ✅ เพิ่ม
   setPersistence,
   browserLocalPersistence,
   signOut
@@ -25,20 +26,31 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
+// --- Google provider ---
 export const provider = new GoogleAuthProvider();
+// ✅ บังคับให้ขึ้นตัวเลือกบัญชีทุกครั้ง
+provider.setCustomParameters({ prompt: 'select_account' });
 
-export const loginWithGoogle = async () => {
+/**
+ * เรียกตอนกดปุ่ม "Sign in with Google"
+ * forceChoose = true จะ signOut ก่อนเพื่อกัน auto-login บัญชีเดิม
+ */
+export const loginWithGoogle = async (forceChoose = true) => {
   await setPersistence(auth, browserLocalPersistence);
+  if (forceChoose) await signOut(auth);               // ✅ กันล็อกอินอัตโนมัติบัญชีเดิม
   try {
     return await signInWithPopup(auth, provider);
   } catch (e) {
-    // ถ้าป๊อปอัปถูกบล็อก/ปิด ให้สลับไปใช้ Redirect
+    // ถ้าป๊อปอัปถูกบล็อก/ปิด → ใช้ Redirect
     if (e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user') {
       return signInWithRedirect(auth, provider);
     }
-    throw e; // โยนให้ layer บนแจ้ง error code
+    throw e;
   }
 };
 
-export function logout() { return auth.signOut(); } // ตัวอย่าง — ตรวจว่ามี export อยู่
+// ✅ เรียกใน useEffect ของหน้า Login/App เมื่อใช้ redirect
+export const resolveRedirectResult = () => getRedirectResult(auth);
+
+export function logout() { return auth.signOut(); }
 export const ts = () => serverTimestamp();
