@@ -1,68 +1,91 @@
 // src/pages/admin/AdminLayout.jsx
-import React, { useEffect, useCallback, useRef } from 'react';
-import { Outlet, useOutletContext, Link, useNavigate } from 'react-router-dom';
-import { logout } from '../../firebase';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { logout, auth, db } from '../../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { alertError } from '../../lib/alert.js';
 
 export default function AdminLayout() {
-  // รับ context จาก App: { isAdmin, checking, user }
-  const parentCtx = useOutletContext() || {};
-  const { isAdmin, checking, user } = parentCtx;
   const navigate = useNavigate();
   const skipRedirectRef = useRef(false);
 
-  // ถ้าเช็คเสร็จแล้วและไม่ใช่ admin ให้ redirect ไป /user
-  // แต่ข้ามการ redirect ถ้าเรากำลังทำ logout (skipRedirectRef)
+  const [roleLoading, setRoleLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // ✅ subscribe การเปลี่ยนสถานะ login
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u || null);
+      if (!u) {
+        setIsAdmin(false);
+        setRoleLoading(false);
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      try {
+        // ✅ ตรวจสอบว่า uid นี้อยู่ใน collection "admins"
+        const snap = await getDoc(doc(db, 'admins', u.uid));
+        setIsAdmin(snap.exists());
+      } catch (err) {
+        console.error('Check admin role error:', err);
+        alertError('ตรวจสอบสิทธิ์ไม่สำเร็จ');
+      } finally {
+        setRoleLoading(false);
+      }
+    });
+    return () => unsub();
+  }, [navigate]);
+
+  // ✅ redirect เฉพาะตอนเช็คเสร็จแล้ว
   useEffect(() => {
     if (skipRedirectRef.current) return;
-    if (checking) return;
+    if (roleLoading) return; // รอให้โหลดบทบาทก่อน
     if (!isAdmin) navigate('/user', { replace: true });
-  }, [checking, isAdmin, navigate]);
+  }, [roleLoading, isAdmin, navigate]);
 
-  // ป้องกันการคลิกแล้วไม่ redirect — ทำจริงๆ แล้ว navigate และมี fallback
+  // ✅ logout
   const handleLogout = useCallback(async () => {
-    console.log('AdminLayout: logout clicked');
-    // บอก effect ว่าเรากำลัง logout — ข้าม redirect ไป /user
     skipRedirectRef.current = true;
     try {
       await logout();
-      console.log('AdminLayout: logout success');
-    } catch (e) {
-      console.error('AdminLayout: logout error', e);
-    }
-
-    try {
       navigate('/login', { replace: true });
-      console.log('AdminLayout: navigate to /login');
     } catch (e) {
-      console.warn('AdminLayout: navigate failed, using location.href fallback', e);
-      window.location.href = '/login';
+      console.error('Logout error', e);
+      alertError('ออกจากระบบไม่สำเร็จ');
     } finally {
-      // ให้เวลา router/auth อัพเดตก่อนล้าง flag (ไม่จำเป็นแต่ปลอดภัย)
       setTimeout(() => { skipRedirectRef.current = false; }, 1000);
     }
   }, [navigate]);
 
-  if (checking) return <div style={{ padding: 24 }}>Checking permissions…</div>;
+  if (roleLoading) return <div style={{ padding: 24 }}>Checking permissions…</div>;
 
   return (
     <div className="admin-page">
       <header className="header">
         <div className="header-top">
-          {user ? (
+          {user && (
             <div className="user-chip" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <img src={user.photoURL} alt="avatar" width={28} height={28} style={{ borderRadius: '50%' }} />
-              <button
-                className="logout-btn"
-                onClick={handleLogout}
-                type="button"
-              >
+              <img
+                src={user.photoURL || 'https://via.placeholder.com/28'}
+                alt="avatar"
+                width={28}
+                height={28}
+                style={{ borderRadius: '50%' }}
+              />
+              <button className="logout-btn" onClick={handleLogout} type="button">
                 Logout
               </button>
             </div>
-          ) : null}
+          )}
         </div>
 
-        <div className="header-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div
+          className="header-main"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
           <div className="brand" style={{ display: 'flex', flexDirection: 'column' }}>
             <h1 className="mustode">MUSTODE</h1>
             <h1 className="shop">SHOP</h1>
@@ -76,14 +99,12 @@ export default function AdminLayout() {
             </ul>
           </nav>
 
-          <div className="icons" aria-hidden style={{ display: 'flex', gap: 12 }}>
-          </div>
+          <div className="icons" aria-hidden style={{ display: 'flex', gap: 12 }} />
         </div>
       </header>
 
       <main className="main-content">
-        {/* forward same context ให้ children */}
-        <Outlet context={parentCtx} />
+        <Outlet context={{ isAdmin, checking: roleLoading, user }} />
       </main>
     </div>
   );

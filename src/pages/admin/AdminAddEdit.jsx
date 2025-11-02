@@ -3,6 +3,7 @@ import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom
 import { db } from '../../firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { uploadToCloudinary } from '../../lib/cloudinary';
+import { alertSuccess, alertError, alertConfirm } from '../../lib/alert.js';
 
 export default function AdminAddEdit() {
   const { isAdmin, checking } = useOutletContext() || {};
@@ -37,7 +38,7 @@ export default function AdminAddEdit() {
   const onPickFiles = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    if (!isAdmin) return alert('เฉพาะแอดมินเท่านั้น');
+    if (!isAdmin) return alertError('เฉพาะแอดมินเท่านั้น');
 
     try {
       setUploading(true);
@@ -52,7 +53,13 @@ export default function AdminAddEdit() {
       setUploadMsg('Upload complete.');
     } catch (err) {
       console.error(err);
-      alert(err?.message || 'Upload failed');
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: err?.message || 'Upload failed',
+      });
+      
+
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -66,7 +73,7 @@ export default function AdminAddEdit() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!isAdmin) return alert('เฉพาะแอดมินเท่านั้น');
+    if (!isAdmin) return alertError('เฉพาะแอดมินเท่านั้น');
 
     const payload = {
       title: title.trim(),
@@ -80,11 +87,36 @@ export default function AdminAddEdit() {
     try {
       const ref = doc(db, 'listings', id || (crypto?.randomUUID?.() || String(Date.now())));
       await setDoc(ref, payload, { merge: true });
-      alert('บันทึกสำเร็จ');
+      alertSuccess('บันทึกสำเร็จ');
       navigate('/admin');
     } catch (err) {
       console.error(err);
-      alert('บันทึกไม่สำเร็จ');
+      alertError('บันทึกไม่สำเร็จ');
+    }
+  };
+
+  // 🔹 ฟังก์ชันสุ่มข้อมูล 10 ชิ้น
+  const addRandom10 = async () => {
+    if (!isAdmin) return alertError('เฉพาะแอดมินเท่านั้น');
+    if (!confirm('เพิ่มสินค้าแบบสุ่ม 10 ชิ้น?')) return;
+    const imageUrl = 'https://res.cloudinary.com/dmlf7oz4s/image/upload/v1761993515/nkrtc6eneq6smyik1dgd.png';
+    const titles = ['Roblox', 'Valorant', 'Genshin', 'Minecraft', 'FreeFire', 'PUBG', 'CS2', 'Mobile Legends', 'Fortnite', 'LoL'];
+    try {
+      for (let i = 0; i < 10; i++) {
+        const ref = doc(db, 'listings', crypto.randomUUID());
+        await setDoc(ref, {
+          title: `${titles[i]} #${Math.floor(Math.random() * 9999)}`,
+          desc: `Test item ${i + 1}`,
+          price: Math.floor(Math.random() * 500 + 100),
+          images: [imageUrl],
+          status: 'active',
+          createdAt: serverTimestamp(),
+        });
+      }
+      alertSuccess('เพิ่มสินค้าสุ่ม 10 ชิ้นสำเร็จ');
+    } catch (err) {
+      console.error(err);
+      alertError('เพิ่มไม่สำเร็จ');
     }
   };
 
@@ -116,6 +148,14 @@ export default function AdminAddEdit() {
             <div style={{ display: 'flex', gap: 12, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
               <button type="button" className="pill" onClick={pickFiles} disabled={uploading}>
                 {uploading ? 'Uploading...' : 'เลือกจากเครื่อง'}
+              </button>
+              <button
+                type="button"
+                className="pill"
+                style={{ background: '#0078ff', color: '#fff' }}
+                onClick={addRandom10}
+              >
+                เพิ่มสินค้าสุ่ม 10 ชิ้น
               </button>
               {!!uploadMsg && <span style={{ color: '#666' }}>{uploadMsg}</span>}
               <input

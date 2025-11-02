@@ -1,5 +1,5 @@
 // src/pages/admin/AdminHome.jsx
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { db } from '../../firebase';
 import {
   collection,
@@ -11,6 +11,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { useOutletContext, useNavigate } from 'react-router-dom';
+import { alertSuccess, alertError, alertConfirm } from '../../lib/alert.js';
 
 export default function AdminHome() {
   const { isAdmin, checking } = useOutletContext() || {};
@@ -18,51 +19,84 @@ export default function AdminHome() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const aliveRef = useRef(false);
+  const unsubRef = useRef(() => {});
+
   useEffect(() => {
+    aliveRef.current = true;
     const col = collection(db, 'listings');
 
-    // พยายาม subscribe แบบมีตัวกรองก่อน (active เท่านั้น)
-    const q1 = query(col, where('status', '==', 'active'), orderBy('createdAt', 'desc'));
-    const q2 = query(col, where('status', '==', 'active')); // สำรองถ้า q1 ขอ index
-    const q3 = query(col, orderBy('createdAt', 'desc'));    // สำรองสุด (ดึงทั้งหมดแล้วไปกรองฝั่ง UI)
-    const q4 = query(col);                                  // สำรองสุดท้าย
+    // ลองหลาย query (index → fallback)
+    const q1 = query(col, where('status', '==', 'active'), orderBy('createdAt', 'desc')); // ต้องมี composite index
+    const q2 = query(col, where('status', '==', 'active'));
+    const q3 = query(col, orderBy('createdAt', 'desc'));
+    const q4 = query(col);
 
     const qs = [q1, q2, q3, q4];
-    let unsub = () => {};
-    const trySub = (i = 0) => {
-      if (i >= qs.length) { setLoading(false); return; }
-      unsub = onSnapshot(
-        qs[i],
-        (snap) => {
-          const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          setItems(rows);
-          setLoading(false);
-        },
-        // ถ้าพัง (เช่นยังไม่มี index) ลองตัวเลือกถัดไปอัตโนมัติ
-        () => trySub(i + 1)
-      );
+
+    const cleanup = () => {
+      try { unsubRef.current?.(); } catch {}
+      unsubRef.current = () => {};
     };
 
-    trySub(0);
-    return () => unsub();
+    const start = (i = 0) => {
+      if (!aliveRef.current) return;
+      if (i >= qs.length) { setLoading(false); return; }
+
+      cleanup();
+      setTimeout(() => {
+        if (!aliveRef.current) return;
+        try {
+          unsubRef.current = onSnapshot(
+            qs[i],
+            (snap) => {
+              if (!aliveRef.current) return;
+              const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+              setItems(rows);
+              setLoading(false);
+            },
+            (err) => {
+              console.warn('[AdminHome] fallback due to:', err?.message || err);
+              start(i + 1);
+            }
+          );
+        } catch (e) {
+          console.warn('[AdminHome] snapshot open failed:', e?.message || e);
+          start(i + 1);
+        }
+      }, 30); // ป้องกัน INTERNAL ASSERTION (v12.3.0)
+    };
+
+    start(0);
+    return () => {
+      aliveRef.current = false;
+      cleanup();
+    };
   }, []);
 
-  // กันพลาดอีกชั้น: ถ้าไปใช้ q3/q4 จะมีของ sold ปะปน — กรองออกที่ UI
+  // กันพลาด: ถ้าใช้ q3/q4 จะมีของ sold ปะปน — กรองออกที่ UI
   const visibleItems = useMemo(
-    () => items.filter(it => (it?.status || 'active') !== 'sold'),
+    () => items.filter(it => (it?.status || '').toLowerCase() !== 'sold'),
     [items]
   );
 
+
+
   const onDelete = async (id) => {
-    if (!isAdmin) return alert('เฉพาะแอดมินเท่านั้น');
-    if (!confirm('ลบรายการนี้?')) return;
+    if (!isAdmin) return alertError('เฉพาะแอดมินเท่านั้น');
+
+    const confirmed = await alertConfirm('ต้องการลบรายการนี้หรือไม่?');
+    if (!confirmed) return; // ถ้ากดยกเลิก ก็ออกเลย
+
     try {
       await deleteDoc(doc(db, 'listings', id));
+      alertSuccess('ลบข้อมูลสำเร็จ');
     } catch (e) {
       console.error(e);
-      alert('ลบไม่สำเร็จ');
+      alertError('ลบไม่สำเร็จ');
     }
   };
+
 
   if (checking) return null;
 
@@ -106,7 +140,6 @@ export default function AdminHome() {
                     >
                       ✏️
                     </button>
-                    
                   </>
                 ) : (
                   <span style={{ color: '#999' }}>เฉพาะแอดมิน</span>

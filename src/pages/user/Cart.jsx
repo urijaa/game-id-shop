@@ -2,6 +2,7 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CartContext } from '../../contexts/CartContext.jsx';
+import { alertSuccess, alertError, alertConfirm } from '../../lib/alert.js';
 
 const cartStyles = `
   .cart-backdrop {

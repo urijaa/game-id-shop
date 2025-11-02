@@ -41,7 +41,7 @@ const router = createBrowserRouter([
           { path: 'product/:id', element: <UserProduct /> },// /user/product/:id
           { path: 'contact', element: <UserContact /> },    // /user/contact
           { path: 'payment', element: <Payment /> },
-          { path: 'complete', element: <CompletePayment /> },
+          { path: 'complete', element: <UserProduct /> },
           
           // (ออปชัน) เผื่อเผลอใช้ตัวใหญ่ /Products ให้ redirect มาที่ตัวเล็ก
           { path: 'Products', element: <Navigate to="products" replace /> },

@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { CartContext } from '../../contexts/CartContext.jsx';
 import { markListingAsSold } from '../../lib/sales'; // ✅ ใช้งานจริง: บันทึกลง Firestore
 import promptPayQr from '../../assets/Promptpay.png'; // 🌟 1. Import รูป QR จริง
+import { alertSuccess, alertError, alertConfirm,onConfirm } from '../../lib/alert.js';
 
 // QR mock (ลบตัวแปร qrCodeImage ออก)
 
@@ -101,11 +102,11 @@ export default function Payment({ onClose, onConfirm }) {
 
     // allow confirm even if not logged-in? (keep existing behavior)
     if (!user?.uid) {
-      alert('กรุณาเข้าสู่ระบบก่อนชำระเงิน');
+      alertError('กรุณาเข้าสู่ระบบก่อนชำระเงิน');
       return;
     }
     if (!Array.isArray(items) || items.length === 0) {
-      alert('ไม่พบสินค้าในคำสั่งซื้อ');
+      alertError('ไม่พบสินค้าในคำสั่งซื้อ');
       return;
     }
 
@@ -144,6 +145,7 @@ export default function Payment({ onClose, onConfirm }) {
       }));
 
       console.log('Payment: saved successfully, items removed from cart', itemsToSend);
+      alertSuccess('ขอบคุณที่ใช้บริการ');
 
       // If caller supplied onConfirm (modal flow), call it so UserLayout can open Complete modal
       if (typeof onConfirm === 'function') {
@@ -182,7 +184,7 @@ export default function Payment({ onClose, onConfirm }) {
         navigate('/user/complete', { state: { items: debugItems, error: e?.message || String(e) } });
       }
 
-      alert('บันทึกการชำระเงินไม่สำเร็จ: ' + (e?.message || e));
+      alertError('บันทึกการชำระเงินไม่สำเร็จ: ' + (e?.message || e));
     } finally {
       setUploading(false);
     }

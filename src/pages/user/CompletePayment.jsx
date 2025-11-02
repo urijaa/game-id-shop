@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
 import { markListingAsSold } from '../../lib/sales';
+import { alertSuccess, alertError, alertConfirm, onConfirm } from '../../lib/alert.js';
 
 const mockItem = {
   id: 1,
@@ -39,21 +40,20 @@ export default function Payment() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!user?.uid) return alert('ต้องเข้าสู่ระบบก่อน');
-    if (!listingId) return alert('ไม่พบรายการสินค้า');
-
+    if (!user?.uid) return alertError('ต้องเข้าสู่ระบบก่อน');
+    if (!listingId) return alertError('ไม่พบรายการสินค้า');
     try {
       await markListingAsSold(listingId, {
         buyerUid: user.uid,
         buyerName: user.displayName || user.email || 'buyer',
         paymentMethod: method,
         paymentRef: ref.trim(),
-        soldBy: 'system', // หรือเก็บ uid แอดมิน/ระบบที่ทำธุรกรรม
+        soldBy: 'system',
       });
-      navigate('/user/complete', { replace: true });
+      navigate('/user/complete', { replace: true }); // ✅ แล้วค่อยเปลี่ยนหน้า
     } catch (err) {
       console.error(err);
-      alert('บันทึกการชำระเงินไม่สำเร็จ');
+      alertError('บันทึกการชำระเงินไม่สำเร็จ');
     }
   };
 

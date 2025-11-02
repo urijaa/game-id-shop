@@ -1,6 +1,7 @@
 // src/pages/user/Favorite.jsx (ไฟล์ใหม่)
 
 import React from 'react';
+import { alertSuccess, alertError, alertConfirm } from '../../lib/alert.js';
 
 // ----- 1. ข้อมูลจำลอง (Mock Data) -----
 const mockFavItems = [
