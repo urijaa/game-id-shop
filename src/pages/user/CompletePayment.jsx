@@ -1,15 +1,6 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
-import { markListingAsSold } from '../../lib/sales';
-import { alertSuccess, alertError, alertConfirm, onConfirm } from '../../lib/alert.js';
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const mockItem = {
-  id: 1,
-  title: 'ไอดี AFK Journey (Global) - 120,000+ Diamonds + สุ่มตัวละคร 6 ดาว 20 ตัวขึ้นไป',
-  price: 550,
-  quantity: 1,
-  image: 'https://via.placeholder.com/90x90.png?text=AFK+Item'
-};
 
 const styles = `
   .complete-backdrop { position: fixed; inset:0; background:rgba(0,0,0,0.6); z-index:60; display:grid; place-items:center; }
@@ -26,62 +17,12 @@ const styles = `
 
 function Styles() { return <style>{styles}</style>; }
 
-export default function Payment() {
-  const { user } = useOutletContext() || {};
-  const [search] = useSearchParams();
+export default function CompletePayment() { 
   const location = useLocation();
   const navigate = useNavigate();
 
-  const listingIdFromState = location.state?.listingId || null;
-  const listingId = listingIdFromState || search.get('id');
-
-  const [method, setMethod] = useState('PromptPay');
-  const [ref, setRef] = useState('');
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    if (!user?.uid) return alertError('ต้องเข้าสู่ระบบก่อน');
-    if (!listingId) return alertError('ไม่พบรายการสินค้า');
-    try {
-      await markListingAsSold(listingId, {
-        buyerUid: user.uid,
-        buyerName: user.displayName || user.email || 'buyer',
-        paymentMethod: method,
-        paymentRef: ref.trim(),
-        soldBy: 'system',
-      });
-      navigate('/user/complete', { replace: true }); // ✅ แล้วค่อยเปลี่ยนหน้า
-    } catch (err) {
-      console.error(err);
-      alertError('บันทึกการชำระเงินไม่สำเร็จ');
-    }
-  };
-
   return (
-    <div className="payment-page" style={{ padding: 20 }}>
-      <h2>Payment</h2>
-      {!listingId && <p style={{color:'#a00'}}>ไม่พบรหัสสินค้า (ต้องส่ง ?id=listingId หรือ state.listingId)</p>}
-
-      <form onSubmit={onSubmit} style={{ display:'grid', gap:12, maxWidth:460 }}>
-        <label>
-          ช่องทางชำระ
-          <select value={method} onChange={(e)=>setMethod(e.target.value)} style={{ width:'100%', padding:8 }}>
-            <option value="PromptPay">PromptPay</option>
-            <option value="BankTransfer">Bank Transfer</option>
-            <option value="CreditCard">Credit Card</option>
-          </select>
-        </label>
-
-        <label>
-          อ้างอิงชำระ (Invoice/Slip/Txn Id)
-          <input value={ref} onChange={(e)=>setRef(e.target.value)} required style={{ width:'100%', padding:8 }} />
-        </label>
-
-        <button type="submit" style={{ padding:'10px 14px', borderRadius:8, border:'1px solid #ddd', cursor:'pointer' }}>
-          ยืนยันการชำระ
-        </button>
-      </form>
-
+    <>
       <Styles />
       <div className="complete-backdrop" onClick={() => navigate('/user', { replace: true })}>
         <div className="complete-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
@@ -101,11 +42,16 @@ export default function Payment() {
                     <div style={{ color: '#666', marginTop: 6 }}>฿{Number(item.price || 0).toLocaleString()} × {item.quantity || 1}</div>
                   </div>
                 </div>
-
+            
                 <div className="complete-item-meta">
-                  <div><strong>ID Game :</strong>&nbsp;{item.gameId || item.idGame || ''}</div>
-                  <div style={{ marginTop: 6 }}><strong>Password :</strong>&nbsp;{item.password || item.pass || ''}</div>
+                  <div style={{ fontSize: 13, color: '#444' }}>
+                    <strong style={{ fontSize: 13, color: '#444' }}>ID Game : WebApp &nbsp;{item.title}</strong>
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 13, color: '#444' }}>
+                    <strong style={{ fontSize: 13, color: '#444' }}>Password:&nbsp;{item.password || item.pass || 'GradeA'}</strong>
+                  </div>
                 </div>
+
               </div>
             )) : (
               <div className="complete-item" key={mockItem.id}>
@@ -122,9 +68,14 @@ export default function Payment() {
                 </div>
 
                 <div className="complete-item-meta">
-                  <div><strong>ID Game :</strong>&nbsp;{mockItem.gameId || mockItem.idGame || ''}</div>
-                  <div style={{ marginTop: 6 }}><strong>Password :</strong>&nbsp;{mockItem.password || mockItem.pass || ''}</div>
+                  <div style={{ fontSize: 13, color: '#444' }}>
+                    <strong style={{ fontSize: 13, color: '#444' }}>ID Game : WebApp&nbsp;{mockItem.title}</strong>
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 13, color: '#444' }}>
+                    <strong style={{ fontSize: 13, color: '#444' }}>Password:&nbsp;{mockItem.password || mockItem.pass || 'GradeA'}</strong>
+                  </div>
                 </div>
+
               </div>
             )}
           </div>
@@ -132,14 +83,13 @@ export default function Payment() {
           <div style={{ borderTop: '1px solid #eee', paddingTop: 12 }}>
             <div className="complete-footer">
               <div>
-                <div><strong>Order ID:</strong> {location.state?.orderId || '-'}</div>
-                <div style={{ marginTop: 6 }}><strong>Total:</strong> ฿{Array.isArray(location.state?.items) ? location.state.items.reduce((s, it) => s + (Number(it.price || 0) * (it.quantity || 1)), 0) : mockItem.price * mockItem.quantity}</div>
+                <div style={{ marginTop: 6 }}><strong>Total:</strong> ฿{Array.isArray(location.state?.items) ? location.state.items.reduce((s, it) => s + (Number(it.price || 0) * (it.quantity || 1)), 0).toLocaleString() : (mockItem.price * mockItem.quantity).toLocaleString()}</div>
               </div>
               <button className="done-btn" onClick={() => navigate('/user', { replace: true })}>Done</button>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
