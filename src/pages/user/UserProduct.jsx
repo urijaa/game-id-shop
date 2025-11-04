@@ -7,6 +7,7 @@ import 'rc-slider/assets/index.css';
 import { db } from '../../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { CartContext } from '../../contexts/CartContext.jsx';
+import { alertSuccess, alertError, alertConfirm } from '../../lib/alert.js';
 
 const pageStyles = `
   .products-page-layout { display: flex; gap: 24px; }

@@ -1,55 +1,102 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { db } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-export default function AdminHistoryDetail() {
-  const { id } = useParams();
-  const [item, setItem] = useState(null);
-  const [loading, setLoading] = useState(true);
+const mockItem = {
+  id: 1,
+  title: 'ไอดี AFK Journey (Global) - 120,000+ Diamonds + สุ่มตัวละคร 6 ดาว 20 ตัวขึ้นไป',
+  price: 550,
+  quantity: 1,
+  image: 'https://via.placeholder.com/90x90.png?text=AFK+Item'
+};
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db, 'listings', id));
-        if (snap.exists()) setItem({ id: snap.id, ...snap.data() });
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [id]);
+const styles = `
+  .complete-backdrop { position: fixed; inset:0; background:rgba(0,0,0,0.6); z-index:60; display:grid; place-items:center; }
+  .complete-modal { width:90%; max-width:720px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 8px 30px rgba(0,0,0,0.15); z-index:70; }
+  .complete-items { display:flex; flex-direction:column; gap:12px; max-height:380px; overflow:auto; margin-bottom:12px; }
+  .complete-item { display:flex; gap:12px; align-items:center; justify-content:space-between; border:1px solid #eee; padding:10px; border-radius:8px; }
+  .complete-item-left { display:flex; gap:12px; align-items:center; flex:1; }
+  .complete-item-image { width:70px; height:70px; object-fit:cover; border-radius:8px; }
+  .complete-item-title { font-weight:700; margin:0; }
+  .complete-item-meta { text-align:right; min-width:180px; }
+  .complete-footer { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+  .done-btn { padding:10px 14px; border-radius:8px; background:#2d8cf0; color:#fff; border:none; cursor:pointer; }
+`;
 
-  if (loading) return <div style={{ padding: 20 }}>Loading…</div>;
-  if (!item) return <div style={{ padding: 20 }}>Not found</div>;
+function Styles() { return <style>{styles}</style>; }
 
-  const img = (Array.isArray(item.images) && item.images[0]) || item.image;
-  const soldAt = item?.soldAt?.seconds
-    ? new Date(item.soldAt.seconds * 1000).toLocaleString()
-    : '-';
+export default function CompletePayment() { 
+  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
-    <div className="admin-page">
-      <div style={{ background:'#fff', borderRadius:12, padding:20 }}>
-        <h2>Sale Detail</h2>
-        <div style={{ display:'grid', gridTemplateColumns:'320px 1fr', gap:24 }}>
-          <img src={img || 'https://via.placeholder.com/640x480?text=No+Image'}
-               alt="" style={{ width:'100%', borderRadius:12, objectFit:'cover' }} />
-          <div>
-            <h3 style={{ marginTop:0 }}>{item.title || 'Untitled'}</h3>
-            <p style={{ color:'#555' }}>{item.desc || '-'}</p>
-            <div style={{ marginTop:8, lineHeight:1.8 }}>
-              <div><b>ราคา</b>: ฿{Number(item.price || 0).toLocaleString()}</div>
-              <div><b>สถานะ</b>: {item.status || '-'}</div>
-              <div><b>ขายเมื่อ</b>: {soldAt}</div>
-              <div><b>ผู้ซื้อ (UID)</b>: {item.buyerUid || '-'}</div>
-              <div><b>ผู้ซื้อ (ชื่อ)</b>: {item.buyerName || '-'}</div>
-              <div><b>ช่องทางชำระ</b>: {item.paymentMethod || '-'}</div>
-              <div><b>อ้างอิงชำระ</b>: {item.paymentRef || '-'}</div>
-              <div><b>ผู้ขาย/แอดมิน</b>: {item.soldBy || '-'}</div>
+    <>
+      <Styles />
+      <div className="complete-backdrop" onClick={() => navigate('/user', { replace: true })}>
+        <div className="complete-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+          <h2 style={{ marginTop: 0 }}>Payment Complete</h2>
+
+          <div className="complete-items">
+            {Array.isArray(location.state?.items) ? location.state.items.map((item) => (
+              <div className="complete-item" key={item.id || `${item.title}-${Math.random()}`}>
+                <div className="complete-item-left">
+                  <img
+                    src={(Array.isArray(item.images) && item.images[0]) || item.image || 'https://via.placeholder.com/90x90.png?text=AFK+Item'}
+                    alt={item.title}
+                    className="complete-item-image"
+                  />
+                  <div>
+                    <p className="complete-item-title">{item.title}</p>
+                    <div style={{ color: '#666', marginTop: 6 }}>฿{Number(item.price || 0).toLocaleString()} × {item.quantity || 1}</div>
+                  </div>
+                </div>
+            
+                <div className="complete-item-meta">
+                  <div style={{ fontSize: 13, color: '#444' }}>
+                    <strong style={{ fontSize: 13, color: '#444' }}>ID Game : WebApp &nbsp;{item.title}</strong>
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 13, color: '#444' }}>
+                    <strong style={{ fontSize: 13, color: '#444' }}>Password:&nbsp;{item.password || item.pass || 'GradeA'}</strong>
+                  </div>
+                </div>
+
+              </div>
+            )) : (
+              <div className="complete-item" key={mockItem.id}>
+                <div className="complete-item-left">
+                  <img
+                    src={mockItem.image}
+                    alt={mockItem.title}
+                    className="complete-item-image"
+                  />
+                  <div>
+                    <p className="complete-item-title">{mockItem.title}</p>
+                    <div style={{ color: '#666', marginTop: 6 }}>฿{Number(mockItem.price).toLocaleString()} × {mockItem.quantity}</div>
+                  </div>
+                </div>
+
+                <div className="complete-item-meta">
+                  <div style={{ fontSize: 13, color: '#444' }}>
+                    <strong style={{ fontSize: 13, color: '#444' }}>ID Game : WebApp&nbsp;{mockItem.title}</strong>
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 13, color: '#444' }}>
+                    <strong style={{ fontSize: 13, color: '#444' }}>Password:&nbsp;{mockItem.password || mockItem.pass || 'GradeA'}</strong>
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+
+          <div style={{ borderTop: '1px solid #eee', paddingTop: 12 }}>
+            <div className="complete-footer">
+              <div>
+                <div style={{ marginTop: 6 }}><strong>Total:</strong> ฿{Array.isArray(location.state?.items) ? location.state.items.reduce((s, it) => s + (Number(it.price || 0) * (it.quantity || 1)), 0).toLocaleString() : (mockItem.price * mockItem.quantity).toLocaleString()}</div>
+              </div>
+              <button className="done-btn" onClick={() => navigate('/user', { replace: true })}>Done</button>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

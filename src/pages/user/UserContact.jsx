@@ -1,5 +1,6 @@
 // src/pages/user/UserContact.jsx
 import React, { useState } from 'react';
+import { alertSuccess, alertError, alertConfirm } from '../../lib/alert.js';
 
 export default function UserContact() {
   const [form, setForm] = useState({
